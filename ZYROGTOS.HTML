@@ -1,0 +1,446 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#080d19">
+<title>ZYRO GT OS V1</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+ background:#050914;color:white;font-family:Arial,sans-serif;
+ overflow:hidden;user-select:none
+}
+#phone{
+ position:relative;width:100vw;height:100dvh;overflow:hidden;
+ background:linear-gradient(145deg,#101c39,#080d19 55%,#142b4a);
+ background-size:cover;background-position:center;
+}
+#phone:after{
+ content:"";position:absolute;inset:0;background:rgba(0,0,0,var(--dim,0));
+ pointer-events:none;z-index:2
+}
+#status{
+ height:42px;padding:12px 20px;display:flex;
+ justify-content:space-between;position:relative;z-index:10;
+ font-size:13px;font-weight:bold
+}
+#status button{background:none;border:0;color:white;font-size:13px}
+#home{position:absolute;inset:42px 0 85px;z-index:3;transition:.3s}
+#clock{font-size:55px;font-weight:200;margin:35px 22px 3px}
+#date{margin-left:25px;color:#c3d0e8;font-size:14px}
+.apps{
+ display:grid;grid-template-columns:repeat(4,1fr);
+ gap:26px 8px;padding:40px 16px
+}
+.appIcon{
+ text-align:center;cursor:pointer;font-size:12px;
+ display:flex;align-items:center;flex-direction:column;gap:8px
+}
+.icon{
+ width:57px;height:57px;border-radius:19px;
+ display:grid;place-items:center;font-size:27px;
+ background:linear-gradient(145deg,#263b65,#111c32);
+ border:1px solid #ffffff25;box-shadow:0 7px 20px #0005
+}
+.dock{
+ position:absolute;bottom:18px;left:12px;right:12px;
+ height:70px;border-radius:24px;background:#ffffff17;
+ backdrop-filter:blur(25px);display:flex;
+ justify-content:space-around;align-items:center;
+ z-index:5;transition:.3s
+}
+.dock .icon{width:49px;height:49px}
+#appWindow{
+ position:absolute;inset:0;z-index:8;
+ background:#101827;color:white;display:none;
+ border-radius:25px;overflow:hidden;
+ transform:scale(.2);opacity:0;filter:blur(15px);
+ transform-origin:center;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s,filter .3s
+}
+#appWindow.open{transform:scale(1);opacity:1;filter:blur(0);border-radius:0}
+#appHeader{
+ height:55px;padding:17px;display:flex;justify-content:space-between;
+ background:#17243a;font-weight:bold
+}
+#appContent{padding:20px;height:calc(100% - 115px);overflow:auto}
+#appNav{
+ position:absolute;bottom:0;left:0;right:0;height:60px;
+ display:flex;align-items:center;justify-content:space-around;
+ background:#0a1220;border-top:1px solid #ffffff20
+}
+#appNav button{
+ color:white;background:#ffffff12;border:0;border-radius:30px;
+ padding:10px 18px;font-size:13px
+}
+#appNav button:active{background:#3569be}
+.panel{
+ background:#ffffff12;border:1px solid #ffffff20;
+ border-radius:20px;padding:17px;margin-bottom:15px
+}
+.tileGrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{
+ min-height:75px;border:0;border-radius:17px;
+ background:#263650;color:white;font-size:14px;
+ text-align:left;padding:14px;cursor:pointer
+}
+.tile.active{background:#347be8}
+.tile span{display:block;font-size:23px;margin-bottom:8px}
+.slider{width:100%;accent-color:#5a9bff;margin:12px 0}
+#controlPanel{
+ position:absolute;z-index:20;top:0;left:0;right:0;
+ padding:22px 18px 25px;background:#101a2beF;
+ backdrop-filter:blur(35px);border-radius:0 0 30px 30px;
+ transform:translateY(-110%);transition:transform .35s;
+ box-shadow:0 15px 50px #0009;max-height:92dvh;overflow:auto
+}
+#controlPanel.show{transform:translateY(0)}
+.cpTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.cpTop h2{font-size:23px}
+.cpTop button,.closeBtn{
+ border:0;background:#ffffff18;color:white;border-radius:30px;
+ padding:9px 14px
+}
+.cpDate{color:#c1cce0;font-size:13px;margin-bottom:16px}
+.cpTiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cpTile{
+ height:83px;border:0;border-radius:18px;
+ background:#29384f;color:white;text-align:left;padding:14px;
+ font-size:14px
+}
+.cpTile.active{background:#347be8}
+.cpTile .emoji{font-size:22px;display:block;margin-bottom:7px}
+.cpSlider{
+ background:#ffffff12;border-radius:18px;padding:15px;
+ margin-top:13px
+}
+.cpSlider label{font-size:13px;color:#d7e2f4}
+.cpSlider input{width:100%;accent-color:#65a5ff;margin-top:12px}
+.cpBottom{display:flex;justify-content:space-between;margin-top:17px}
+.cpBottom button{
+ border:0;background:#ffffff15;color:white;
+ padding:12px;border-radius:15px
+}
+#toast{
+ position:absolute;z-index:30;bottom:100px;left:50%;
+ transform:translateX(-50%);background:#263650;
+ padding:12px 18px;border-radius:30px;display:none;font-size:13px
+}
+#brightnessLayer{
+ position:absolute;inset:0;background:black;opacity:0;
+ pointer-events:none;z-index:15
+}
+#wallpaperInput{display:none}
+h3{margin-bottom:14px}
+.action{
+ width:100%;padding:14px;border:0;border-radius:13px;
+ background:#347be8;color:white;margin:8px 0
+}
+input[type=color]{width:100%;height:45px;border:0;background:none}
+.preview{
+ width:100%;height:130px;object-fit:cover;
+ border-radius:15px;margin-top:10px
+}
+#phone.rotated{transform:rotate(90deg);width:100dvh;height:100vw;transform-origin:top left;position:absolute;left:100vw;top:0}
+#home.blurred,#appWindow.blurred{filter:blur(8px)}
+</style>
+</head>
+
+<body>
+<div id="phone">
+
+<div id="status" onclick="togglePanel()">
+ <span id="statusTime">9:41</span>
+ <button>◈  Wi-Fi　▰  100%</button>
+</div>
+
+<div id="home">
+ <div id="clock">09:41</div>
+ <div id="date">Tuesday, November 10</div>
+
+ <div class="apps">
+  <div class="appIcon" onclick="openApp('Browser',this)"><div class="icon">🌐</div>Browser</div>
+  <div class="appIcon" onclick="openApp('Gallery',this)"><div class="icon">🖼️</div>Gallery</div>
+  <div class="appIcon" onclick="openApp('Settings',this)"><div class="icon">⚙️</div>Settings</div>
+  <div class="appIcon" onclick="openApp('Files',this)"><div class="icon">📁</div>Files</div>
+  <div class="appIcon" onclick="openApp('Game Mode',this)"><div class="icon">🎮</div>Game Mode</div>
+  <div class="appIcon" onclick="openApp('Music',this)"><div class="icon">🎵</div>Music</div>
+  <div class="appIcon" onclick="openApp('Calculator',this)"><div class="icon">🧮</div>Calculator</div>
+  <div class="appIcon" onclick="openApp('Control Panel',this)"><div class="icon">🎛️</div>Control Panel</div>
+ </div>
+</div>
+
+<div class="dock">
+ <div class="appIcon" onclick="openApp('Phone',this)"><div class="icon">📞</div></div>
+ <div class="appIcon" onclick="openApp('Browser',this)"><div class="icon">🌐</div></div>
+ <div class="appIcon" onclick="openApp('Gallery',this)"><div class="icon">🖼️</div></div>
+ <div class="appIcon" onclick="openApp('Settings',this)"><div class="icon">⚙️</div></div>
+</div>
+
+<div id="appWindow">
+ <div id="appHeader">
+  <span id="appTitle">App</span>
+  <button class="closeBtn" onclick="closeApp()">✕</button>
+ </div>
+ <div id="appContent"></div>
+ <div id="appNav">
+  <button onclick="goHome()">⌂ Home</button>
+  <button onclick="goBack()">‹ Back</button>
+  <button onclick="minimizeApp()">－ Minimize</button>
+ </div>
+</div>
+
+<!-- CONTROL PANEL -->
+<div id="controlPanel">
+ <div class="cpTop">
+  <h2>Control Center</h2>
+  <button onclick="togglePanel()">✕ Close</button>
+ </div>
+ <div class="cpDate" id="panelDate">Tuesday, November 10</div>
+
+ <div class="cpTiles">
+  <button class="cpTile active" id="wifi" onclick="toggleTile('wifi')">
+   <span class="emoji">◈</span>Wi-Fi <small>Connected</small>
+  </button>
+  <button class="cpTile" id="bluetooth" onclick="toggleTile('bluetooth')">
+   <span class="emoji">ᛒ</span>Bluetooth <small>Off</small>
+  </button>
+  <button class="cpTile" id="mobile" onclick="toggleTile('mobile')">
+   <span class="emoji">▥</span>Mobile Data <small>Off</small>
+  </button>
+  <button class="cpTile" id="airplane" onclick="toggleTile('airplane')">
+   <span class="emoji">✈️</span>Airplane Mode <small>Off</small>
+  </button>
+  <button class="cpTile" id="dark" onclick="toggleTile('dark')">
+   <span class="emoji">🌙</span>Dark Mode <small>Off</small>
+  </button>
+  <button class="cpTile active" id="rotation" onclick="toggleTile('rotation')">
+   <span class="emoji">🔄</span>Auto Rotation <small>On</small>
+  </button>
+ </div>
+
+ <div class="cpSlider">
+  <label>☀️ Brightness <span id="brightValue">100%</span></label>
+  <input type="range" min="20" max="100" value="100" oninput="setBrightness(this.value)">
+ </div>
+ <div class="cpSlider">
+  <label>🔊 Volume <span id="volumeValue">70%</span></label>
+  <input type="range" min="0" max="100" value="70" oninput="setVolume(this.value)">
+ </div>
+
+ <div class="cpBottom">
+  <button onclick="showToast('Battery: 100%')">🔋 100%</button>
+  <button onclick="openSettingsFromPanel()">⚙ Settings</button>
+  <button onclick="showToast('ZYRO GT OS V1.0')">ⓘ V1.0</button>
+ </div>
+</div>
+
+<div id="brightnessLayer"></div>
+<div id="toast"></div>
+</div>
+
+<script>
+const phone=document.getElementById("phone");
+const home=document.getElementById("home");
+const appWindow=document.getElementById("appWindow");
+const appContent=document.getElementById("appContent");
+const panel=document.getElementById("controlPanel");
+let lastApp="",lastSource=null,previousApp="";
+let volume=70;
+let states={wifi:true,bluetooth:false,mobile:false,airplane:false,dark:false,rotation:true};
+
+function updateTime(){
+ let d=new Date();
+ document.getElementById("statusTime").textContent=d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+ document.getElementById("clock").textContent=d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",hour12:false});
+ document.getElementById("date").textContent=d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"});
+ document.getElementById("panelDate").textContent=d.toLocaleDateString([], {weekday:"long",month:"long",day:"numeric"});
+}
+updateTime();setInterval(updateTime,1000);
+
+function togglePanel(){
+ panel.classList.toggle("show");
+ home.classList.toggle("blurred",panel.classList.contains("show"));
+}
+function toggleTile(id){
+ states[id]=!states[id];
+ let el=document.getElementById(id);
+ el.classList.toggle("active",states[id]);
+ el.querySelector("small").textContent=states[id]?"On":"Off";
+ if(id==="airplane"&&states.airplane){
+  states.wifi=false;states.mobile=false;
+  document.getElementById("wifi").classList.remove("active");
+  document.getElementById("mobile").classList.remove("active");
+  document.querySelector("#wifi small").textContent="Off";
+  document.querySelector("#mobile small").textContent="Off";
+ }
+ if(id==="rotation")phone.classList.toggle("rotated",!states.rotation);
+ if(id==="dark")phone.style.filter=states.dark?"brightness(.7)":"none";
+ showToast(id.charAt(0).toUpperCase()+id.slice(1)+" "+(states[id]?"On":"Off"));
+}
+function setBrightness(v){
+ document.getElementById("brightValue").textContent=v+"%";
+ document.getElementById("brightnessLayer").style.opacity=(100-v)/130;
+}
+function setVolume(v){
+ volume=v;document.getElementById("volumeValue").textContent=v+"%";
+}
+function showToast(msg){
+ let t=document.getElementById("toast");
+ t.textContent=msg;t.style.display="block";
+ clearTimeout(window.toastTimer);
+ window.toastTimer=setTimeout(()=>t.style.display="none",1800);
+}
+function openSettingsFromPanel(){
+ togglePanel();openApp("Settings",null);
+}
+
+function openApp(name,source){
+ if(panel.classList.contains("show"))togglePanel();
+ previousApp=lastApp;
+ lastApp=name;lastSource=source;
+ let x="50%",y="50%";
+ if(source){
+  let r=source.getBoundingClientRect();
+  x=(r.left+r.width/2)+"px";y=(r.top+r.height/2)+"px";
+ }
+ appWindow.style.transformOrigin=x+" "+y;
+ document.getElementById("appTitle").textContent=name;
+ appContent.innerHTML=getAppHTML(name);
+ home.classList.add("blurred");
+ document.querySelector(".dock").classList.add("blurred");
+ appWindow.style.display="block";
+ requestAnimationFrame(()=>appWindow.classList.add("open"));
+}
+function closeApp(){
+ appWindow.classList.remove("open");
+ appWindow.style.transformOrigin=lastSource?(()=>{
+  let r=lastSource.getBoundingClientRect();
+  return (r.left+r.width/2)+"px "+(r.top+r.height/2)+"px";
+ })():"50% 50%";
+ setTimeout(()=>{
+  appWindow.style.display="none";
+  home.classList.remove("blurred");
+  document.querySelector(".dock").classList.remove("blurred");
+ },350);
+}
+function goHome(){closeApp()}
+function minimizeApp(){closeApp();showToast("App minimized")}
+function goBack(){closeApp()}
+function getAppHTML(name){
+ if(name==="Settings")return `
+ <h3>Settings</h3>
+ <div class="panel" onclick="openWallpaper()">🖼️ Wallpaper Studio</div>
+ <div class="panel" onclick="showToast('ZYRO GT OS V1.0')">ℹ️ About ZYRO GT OS</div>
+ <div class="panel" onclick="togglePanel()">🎛️ Open Control Center</div>
+ <div class="panel">✨ Display and Appearance</div>
+ <div class="panel">🔋 Battery</div>
+ <div class="panel">🔐 Privacy and Security</div>`;
+ if(name==="Control Panel")return `
+ <h3>Control Center</h3>
+ <p>Swipe down from the top of the screen to open the Control Center.</p>
+ <button class="action" onclick="togglePanel()">Open Control Center</button>`;
+ if(name==="Gallery")return `
+ <h3>Gallery</h3><p>Select a photo for your wallpaper.</p>
+ <button class="action" onclick="document.getElementById('wallpaperInput').click()">Choose Image</button>
+ <input type="file" id="wallpaperInput" accept="image/*" onchange="pickWallpaper(event)">`;
+ if(name==="Browser")return `
+ <h3>ZYRO Browser</h3>
+ <input id="weburl" placeholder="Enter website address" style="width:100%;padding:14px;border-radius:12px">
+ <button class="action" onclick="browse()">Open Website</button>`;
+ if(name==="Calculator")return `
+ <h3>Calculator</h3>
+ <input id="calc" placeholder="Enter calculation" style="width:100%;padding:15px">
+ <button class="action" onclick="calculate()">Calculate</button>
+ <p id="calcResult"></p>`;
+ if(name==="Game Mode")return `
+ <h3>🎮 Game Mode</h3>
+ <div class="panel">ZYRO Gaming Dashboard</div>
+ <div class="panel">Performance Mode: Ready</div>
+ <div class="panel">FPS Monitor: Simulator only</div>
+ <button class="action" onclick="showToast('Game Mode activated')">Activate Game Mode</button>`;
+ if(name==="Files")return `<h3>Files</h3><p>ZYRO File Manager demo.</p>`;
+ if(name==="Music")return `<h3>Music</h3><p>Music player demo.</p>`;
+ if(name==="Phone")return `<h3>Phone</h3><p>Dialer demo.</p>`;
+ return `<h3>${name}</h3><p>Welcome to ZYRO GT OS V1.0</p>`;
+}
+function browse(){
+ let u=document.getElementById("weburl").value;
+ if(!u)return;
+ if(!u.startsWith("http"))u="https://"+u;
+ window.open(u,"_blank");
+}
+function calculate(){
+ try{
+  let v=document.getElementById("calc").value;
+  if(!/^[0-9+\-*/(). %]+$/.test(v))throw 0;
+  document.getElementById("calcResult").textContent=Function('"use strict";return ('+v+')')();
+ }catch(e){document.getElementById("calcResult").textContent="Invalid calculation"}
+}
+function openWallpaper(){
+ appContent.innerHTML=`
+ <h3>Wallpaper Studio</h3>
+ <p>Choose your own gallery photo.</p>
+ <button class="action" onclick="document.getElementById('wallpaperInput').click()">📷 Select Wallpaper</button>
+ <input type="file" id="wallpaperInput" accept="image/*" onchange="pickWallpaper(event)">
+ <img id="wallPreview" class="preview" style="display:none">
+ <div class="panel"><label>Solid Wallpaper Color</label><input type="color" onchange="setColor(this.value)"></div>
+ <button class="action" onclick="resetWallpaper()">Reset Wallpaper</button>`;
+}
+function pickWallpaper(e){
+ let f=e.target.files[0];if(!f)return;
+ let reader=new FileReader();
+ reader.onload=()=>{
+  phone.style.backgroundImage="url("+reader.result+")";
+  phone.style.backgroundSize="cover";
+  phone.style.backgroundPosition="center";
+  try{localStorage.setItem("zyroWallpaper",reader.result)}catch(err){}
+  let p=document.getElementById("wallPreview");
+  if(p){p.src=reader.result;p.style.display="block"}
+  showToast("Wallpaper applied");
+ };
+ reader.readAsDataURL(f);
+}
+function setColor(c){
+ phone.style.backgroundImage="none";phone.style.backgroundColor=c;
+ try{localStorage.setItem("zyroColor",c);localStorage.removeItem("zyroWallpaper")}catch(e){}
+}
+function resetWallpaper(){
+ phone.style.backgroundImage="linear-gradient(145deg,#101c39,#080d19 55%,#142b4a)";
+ phone.style.backgroundColor="";
+ localStorage.removeItem("zyroWallpaper");
+ localStorage.removeItem("zyroColor");
+ showToast("Wallpaper reset");
+}
+try{
+ let saved=localStorage.getItem("zyroWallpaper");
+ let color=localStorage.getItem("zyroColor");
+ if(saved)phone.style.backgroundImage="url("+saved+")";
+ else if(color){phone.style.backgroundImage="none";phone.style.backgroundColor=color}
+}catch(e){}
+
+// Swipe down to open Control Center
+let touchStartY=0;
+phone.addEventListener("touchstart",e=>{
+ touchStartY=e.touches[0].clientY;
+},{passive:true});
+phone.addEventListener("touchend",e=>{
+ let endY=e.changedTouches[0].clientY;
+ if(touchStartY<65&&endY-touchStartY>65&&!appWindow.classList.contains("open")){
+  if(!panel.classList.contains("show"))togglePanel();
+ }
+ if(panel.classList.contains("show")&&touchStartY-endY>70)togglePanel();
+},{passive:true});
+
+// Escape key / Android back simulation
+document.addEventListener("keydown",e=>{
+ if(e.key==="Escape"){
+  if(panel.classList.contains("show"))togglePanel();
+  else closeApp();
+ }
+});
+</script>
+</body>
+</html>
